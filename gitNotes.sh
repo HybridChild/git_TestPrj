@@ -98,39 +98,79 @@ git symbolic-ref HEAD refs/heads/master		# low level command to switch branch
 cat .git/HEAD					            # display HEAD file content -> "ref: refs/heads/master"
 
 # When you run git commit, it creates the commit object, specifying the parent of that commit object
-# to be whatever SHA-1 value the reference in HEAD points to.
+# to be whatever SHA-1 value the reference in HEAD points to and updates that SHA-1 value to the new commit object.
 
-# A tag object is similar to a commit object, except it generally points to a commit rather than a tree.
-# A tag object is like a branch reference, but it never moves � it always points to the same commit but
-# gives it a friendlier name.
 
-git update-ref refs/tags/v1.0 a466f97be75448407c3f2dd46867665bfe6a5081		# make lightweight tag of 2nd commit - lightweight tag is just a reference to a commit
-cat .git/refs/tags/v1.0								# display content (direct reference to commit) -> "a466f97be75448407c3f2dd46867665bfe6a5081"
+# Tags
+# A tag object is similar to a commit object (contains a tagger, a date, a message and a pointer.), except it generally points to a commit rather than a tree.
+# A tag object is like a branch reference, but it never moves � it always points to the same commit but gives it a friendlier name.
+
+git update-ref refs/tags/v1.0 a466f97be75448407c3f2dd46867665bfe6a5081		# make lightweight tag of 2nd commit - a lightweight tag is just a reference to a commit
+cat .git/refs/tags/v1.0								                        # display content (direct reference to commit) -> "a466f97be75448407c3f2dd46867665bfe6a5081"
 git tag -a v1.1 d4dce94d872e260bc7290dd6add4f17e1af9dede -m 'Test tag'		# make annotated tag of 3rd commit - annotated tag is a reference to a tag object
-cat .git/refs/tags/v1.1								# display content (referrence to new tag object) -> "5ce7e8437fd432f222d5386352187bf3f2870b65"
-git cat-file -p 5ce7e8437fd432f222d5386352187bf3f2870b65			# display tag object data
+cat .git/refs/tags/v1.1								                        # display content (referrence to new tag object) -> "5ce7e8437fd432f222d5386352187bf3f2870b65"
+git cat-file -p 5ce7e8437fd432f222d5386352187bf3f2870b65			        # display tag object data
 
 
 git remote add origin https://github.com/HybridChild/git_TestPrj.git		# add a remote reference called origin
-git push origin master								# push master branch to remote reference
-cat .git/refs/remotes/origin/master						# display content of remote reference 'origin'
+git push origin master								                        # push master branch to remote reference
+cat .git/refs/remotes/origin/master						                    # display content of remote reference 'origin'
+
+# Notice that a tag doesn’t need to point to a commit; you can tag any Git object.
 
 
+# Remotes
+
+git remote add origin https://github.com/HybridChild/git_TestPrj.git        # Add a remote called origin
+git push origin master                                                      # push master branch to the remote
+
+# Remote references differ from branches (refs/heads references) mainly in that they’re considered read-only.
+# You can git checkout to one, but Git won’t symbolically reference HEAD to one, so you’ll never update it with a commit command.
+# Git manages them as bookmarks to the last known state of where those branches were on those servers.
+
+
+# Packfiles
 
 curl https://raw.githubusercontent.com/mojombo/grit/master/lib/grit/repo.rb > repo.rb	# fetch some "large" file
-git add repo.rb										# add file to staging area
-git commit -m 'Create repo.rb'								# commit changes
-git cat-file -p master^{tree}								# display resulting tree
-git cat-file -s 033b4468fa6b2a9547a70d88d1bbe8bf3f9ed0d5				# see how large the repo.rb file is -> 22044 (blob object compressed to 8K byte)
-echo '# testing' >> repo.rb								# modify repo.rb a bit
-git commit -am 'Modified repo.rb a bit'							# commit change
-git cat-file -p master^{tree}								# display resulting tree -> repo.rb got new blob object
-git cat-file -s b042a60ef7dff760008df33cee372b945b6e884e				# see how large the repo.rb file is -> 22054 (blob object compressed to 8K byte)
+git add repo.rb										                                    # add file to staging area
+git commit -m 'Create repo.rb'								                            # commit changes
+git cat-file -p master^{tree}								                            # display resulting tree
+git cat-file -s 033b4468fa6b2a9547a70d88d1bbe8bf3f9ed0d5				                # see how large the repo.rb file is -> 22044 (blob object compressed to 8K byte)
+echo '# testing' >> repo.rb								                                # modify repo.rb a bit
+git commit -am 'Modified repo.rb a bit'							                        # commit change
+git cat-file -p master^{tree}								                            # display resulting tree -> repo.rb got new blob object
+git cat-file -s b042a60ef7dff760008df33cee372b945b6e884e				                # see how large the repo.rb file is -> 22054 (blob object compressed to 8K byte)
 
 # The initial format in which Git saves objects on disk is called a �loose� object format.
 # Occasionally Git packs up several of these objects into a single binary file called a
 # �packfile� in order to save space and be more efficient.
 # You can manually ask Git to pack up the objects by calling the git gc command
 
-git gc								# ...
-git verify-pack -v .git/objects/pack/pack-a0174c012a4391cf277157a6332ac36607cc8299.idx
+find .git/objects -type f           # display all object files
+git gc								# 'garbage collect'?
+find .git/objects -type f           # display all object files (The objects that remain are the blobs that aren’t pointed to by any commit)
+
+# The packfile is a single file containing the contents of all the objects that were removed from your filesystem.
+# The index is a file that contains offsets into that packfile so you can quickly seek to a specific object.
+# Although the objects on disk before you ran the gc command were collectively about 15K in size, the new packfile is only 7K.
+
+git verify-pack -v .git/objects/pack/pack-a0174c012a4391cf277157a6332ac36607cc8299.idx      # see what was packed up
+
+
+# The Refspec
+git remote add origin https://github.com/HybridChild/git_TestPrj.git
+# Running this command adds a section to your repository’s .git/config file, specifying the name of the remote (origin)
+# the URL of the remote repository and the refspec to be used for fetching
+
+# [remote "origin"]
+#     url = https://github.com/HybridChild/git_TestPrj.git
+#     fetch = +refs/heads/*:refs/remotes/origin/*
+
+# refspec format: fetch = +(optional)<src>:<dst>
+# <src> the pattern for references on the remote side
+# <dst> where those references will be tracked locally
+
+# If there is a master branch on the server, you can access the log of that branch locally
+git log origin/master
+git log remotes/origin/master
+git log refs/remote/origin/master

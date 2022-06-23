@@ -97,8 +97,8 @@ git symbolic-ref HEAD				        # git command to read value of HEAD
 git symbolic-ref HEAD refs/heads/master		# low level command to switch branch
 cat .git/HEAD					            # display HEAD file content -> "ref: refs/heads/master"
 
-# When you run git commit, it creates the commit object, specifying the parent of that commit object
-# to be whatever SHA-1 value the reference in HEAD points to and updates that SHA-1 value to the new commit object.
+# When you run git commit, it creates the commit object, specifying the parent of that commit object to be
+# whatever SHA-1 value the reference in HEAD points to and updates that SHA-1 value to the new commit object.
 
 
 # Tags
@@ -174,3 +174,14 @@ git remote add origin https://github.com/HybridChild/git_TestPrj.git
 git log origin/master
 git log remotes/origin/master
 git log refs/remote/origin/master
+
+# If you want to do a one-time only fetch of the master branch on the remote down to origin/mymaster locally
+git fetch origin master:remotes/origin/mymaster
+
+# To create a branch in a namespace/directory
+git push origin master:refs/heads/namespace/master
+# Automate this by adding the following line in your config file: push = refs/heads/master:refs/heads/namespace/master
+
+# You can also use the refspec to delete references from the remote server
+git push origin :testBranch                 # the refspec is <src>:<dst>, by leaving off the <src> part, this basically says to make the topic branch on the remote nothing, which deletes it.
+git push origin --delete testBranch         # newer syntax to do the same

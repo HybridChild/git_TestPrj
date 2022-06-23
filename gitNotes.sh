@@ -147,7 +147,7 @@ git cat-file -s b042a60ef7dff760008df33cee372b945b6e884e				                # se
 # You can manually ask Git to pack up the objects by calling the git gc command
 
 find .git/objects -type f           # display all object files
-git gc								# 'garbage collect'?
+git gc								# garbage collect
 find .git/objects -type f           # display all object files (The objects that remain are the blobs that aren’t pointed to by any commit)
 
 # The packfile is a single file containing the contents of all the objects that were removed from your filesystem.
@@ -185,3 +185,16 @@ git push origin master:refs/heads/namespace/master
 # You can also use the refspec to delete references from the remote server
 git push origin :testBranch                 # the refspec is <src>:<dst>, by leaving off the <src> part, this basically says to make the topic branch on the remote nothing, which deletes it.
 git push origin --delete testBranch         # newer syntax to do the same
+
+
+# Mainteinance
+find .git/refs -type f
+git gc                          # The other thing gc will do is pack up your references into a single file; packed-refs
+cat .git/packed-refs
+
+# Data recovery
+git reset --hard f0c4067054b80a33bf6cfdcf37284832be267267		# Move master branch to earlier commit, effectively losing all newer commits
+git reflog								# Git silently records the HEAD to reflog every it changes. (commit, branch, git update-ref)
+git log -g								# To see the same information in a much more useful way.
+git branch recover-branch 284ec26d79b91b628080f3ba17b47ed238d938fb	# Find the newest commit reference and create branch
+

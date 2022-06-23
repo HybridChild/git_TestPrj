@@ -193,8 +193,35 @@ git gc                          # The other thing gc will do is pack up your ref
 cat .git/packed-refs
 
 # Data recovery
-git reset --hard f0c4067054b80a33bf6cfdcf37284832be267267		# Move master branch to earlier commit, effectively losing all newer commits
-git reflog								# Git silently records the HEAD to reflog every it changes. (commit, branch, git update-ref)
-git log -g								# To see the same information in a much more useful way.
+git reset --hard f0c4067054b80a33bf6cfdcf37284832be267267		    # Move master branch to earlier commit, effectively losing all newer commits
+git reflog								                            # Git silently records the HEAD to reflog every time it changes. (commit, branch, git update-ref etc.)
+git log -g								                            # To see the same information in a much more useful way.
 git branch recover-branch 284ec26d79b91b628080f3ba17b47ed238d938fb	# Find the newest commit reference and create branch
+
+# If the lost commit is not in the reflog, we can use the git fsck utility, which checks your database for integrity.
+# If you run it with the --full option, it shows you all objects that aren’t pointed to by another object:
+
+git fsck --full                                                     # 
+# Look for the dangling commit and make a branch as before. If it's not there you're screwed
+
+# Removing objects
+git add ProGit.pdf                                  # Add large file to repository
+git commit -m 'Added ProGit.pdf'                    # And commit it
+git rm ProGit.pdf                                   # Now delete the big file
+git commit -m 'Oops - removed ProGit.pdf'           # And commit it
+git gc                                              # Run garbage collect
+git count-objects -v                                # Run the count-objects command to quickly see how much space you’re using
+                                                    # The size-pack entry is the size of your packfiles in kilobytes
+                                                    
+# How to locate and remove large object file
+git verify-pack -v .git/objects/pack/pack-82080aeba245097814eb6f5a5483a26523871147.idx | sort -k 3 -n | tail -3
+                                                    # Sort objects in the packfile by size
+                                                    # largest object here is the blob b732f129bfc6b0e969fee8c876ec83862615da8a
+git rev-list --objects --all | grep b732f12         # Get name of the large file
+git log --oneline --branches -- ProGit.pdf          # See what commits modified this file
+
+
+
+
+
 
